@@ -1,2 +1,8 @@
 http://forums.nesdev.com/viewtopic.php?t=2798
 http://homepage.ntlworld.com/cyborgsystems/CS_Main/6502/6502.htm
+http://www.multigesture.net/articles/how-to-write-an-emulator-chip-8-interpreter/
+http://nesdev.com/
+https://www.reddit.com/r/EmuDev/comments/3plp6h/writing_a_nes_emulator_in_c_from_scratch_30_mins/
+https://github.com/snes9xgit/snes9x
+https://github.com/tjwei/xnes
+http://www.codeproject.com/Articles/38348/My-Nes-Nes-Emulator
