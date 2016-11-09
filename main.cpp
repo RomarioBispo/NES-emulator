@@ -31,28 +31,24 @@ using namespace std;
 */
 int main(int argc, char* argv[])
 {
-    vector<uint32_t> MEM; // main memory defined by 24 bits
+    vector<uint32_t> MEM[8]; // main memory defined by 24 bits
     uint16_t PC; // the program counter, your responsability is keep the flow control
     uint8_t SP; // the stack pointer, keep pointer to the stack execution
     uint8_t A; // the acumulator registrer, store results of arithmetic and logic operations
     uint8_t X,Y; // index of register; 1 byte for each one  (op op | xx xx | yy yy)
     uint8_t P; // processor status last operation, flag of 1 bit
     uint8_t opcode; // the first byte is the opcode
-    uint32_t i =0;
     uint8_t bin;
-    streampos tam;
-    char *memblock;
-    //char buffer[255];
     ifstream rom;
     rom.open("super mario.nes", ios::binary | ios::in);
     if (!rom.is_open()){
           cout<<" nao foi possivel abrir o arquivo\n";
           return 0;
         }
-        
+
     for(int i=0;i<0x10;i++) //get rid of header for now
         rom >> bin;
-    while(!(rom.eof()))
+    while(!(rom.eof())) // reading byte by byte
     {
         rom >> bin;
         cout << "bin " << hex << (int)bin << endl;
