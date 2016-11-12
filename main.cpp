@@ -9,6 +9,7 @@
   #include<math.h>
   #include <fstream>
   #include <sstream>
+#include <bitset>
 
 using namespace std;
 
@@ -40,7 +41,7 @@ int main(int argc, char* argv[])
     uint8_t opcode; // the first byte is the opcode
     uint8_t bin;
     ifstream rom;
-    rom.open("super mario.nes", ios::binary | ios::in);
+    rom.open("nestest.nes", ios::binary | ios::in);
     if (!rom.is_open()){
           cout<<" nao foi possivel abrir o arquivo\n";
           return 0;
@@ -51,7 +52,8 @@ int main(int argc, char* argv[])
     while(!(rom.eof())) // reading byte by byte
     {
         rom >> bin;
-        cout << "bin " << hex << (int)bin << endl;
+		bitset<8> a(bin);
+        cout << "bin " << a.to_string() << endl;
         system("pause");
 
     }
