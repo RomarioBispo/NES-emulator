@@ -1,3 +1,4 @@
+
   #include<stdio.h>
   #include<stdlib.h>
   #include<fstream>
@@ -28,7 +29,6 @@ using namespace std;
   2 - the CPU RAM ()
   3 - the IO registers()
   4 - the PPU control the devices
-
 */
 int main(int argc, char* argv[])
 {
@@ -48,12 +48,12 @@ int main(int argc, char* argv[])
         }
 
     for(int i=0;i<0x10;i++) //get rid of header for now
-        rom >> bin;
+    rom >>noskipws>> bin;
     while(!(rom.eof())) // reading byte by byte
     {
-        rom >> bin;
-		bitset<8> a(bin);
-        cout << "bin " << a.to_string() << endl;
+        rom >> noskipws>> bin;
+        bitset<8> a(bin);
+        cout << "bin " <<hex<< a.to_ulong() << endl;
         system("pause");
 
     }
