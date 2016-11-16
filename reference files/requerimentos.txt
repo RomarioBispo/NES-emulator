@@ -1,0 +1,46 @@
+Only PT-BR 4 now
+
+NES: 
+ - memory mapped I/O
+
+CPU (2A03):
+ - little endian
+ - 8 bit
+ - 56 instruções (151 OPcodes válidos de 256 possíveis)
+ - 13 formas diferentes de endereçar
+
+REGISTRADORES:
+ - PC (16 bit)
+ - Stack Pointer (SP) (8 bit)
+ - Processor Status (P) -> Flags: 0 - Carry Flag (C), 1 - Zero Flag (Z), 2 - Interrupt Disable (I), 3 - Decimal Mode (D), 4 - Break Command (B), 5 - None, 6 - Overflow Flag (V), 7 - Negative Flag (N)
+ - Registradores de proposito geral (8 bit): acumulador (A) e registradores de index (X, Y), usados para guardar dados ou informações temporariamente
+
+RAM:
+ - Zero Page: $0000-$00FF
+ - $0000 - $07FF são espalhados três vezes para $0800-$1FFF
+ - Registradores I/O estão localizados em $2000-$401F
+ - Posições $2000-$2007 são espelhadas a cada 8 bytes na região $2008-$3FFF e os registradores seguintes seguem esse espelhamento
+ - SRAM (WRAM) é a Save RAM, o endereço usado para acessar RAM "in catridges" para guardar saves de jogos
+ - Jogos com apenas um banco(?) 16KB de PRG-ROM vão ser carregados em $8000 e em $C000
+ - Jogos com dois bancos de 16KB de PRG-ROM irão carregar um em $8000 e outro em $C000
+ - Jogos com mais de dois bancos usam memória mepada para determinar qual banco será carregado na memória. O monitor de memória mapeada escreve para um endereço específico (ou endereços pertencentes a um determinado range) e então o endereço escrito se torna um "banco switch"
+
+INTERRUPTIONS:
+ - Ativadas por hardware ou software
+ - Tipos: 
+	Reset: Não mascarável, prioridade: 0, ocorre quando o usuário aperta o botão reset
+	NMI: Não mascaráveis, prioridade: 1, Gerada pela PPU quando "V-Blanks" ocorre no fim de cada frame
+	IRQ: Mascaraveis, prioridade: 2, ocorre como resultado da instrução Break (BRK)
+ - Os endereços de tratamento das interrupções são arquivados em uma tabela no programa em $FFFA-$FFFF
+ - Interrupt Latency: 7 ciclos (Leva sete ciclos da CPU até a começar a tratar a interrupção)
+
+PPU (2C02):
+ - 
+ - 
+
+ROM:
+ - MMC
+
+I/O:
+ - mouse
+ - teclado
