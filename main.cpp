@@ -2,20 +2,12 @@
   #include<stdlib.h>
   #include<fstream>
   #include<iostream>
-  #include<string>
   #include<vector>
+  #include <bitset>
   #include <iomanip>
-  #include <stdint.h>
-  #include<math.h>
-  #include <fstream>
-  #include <sstream>
-#include <bitset>
+
 
 using namespace std;
-struct vtr{
-   uint8_t v[16];
-};
-typedef struct vtr vetor;
 /*    #define C  P[0]; // carry flag, underflow or overflow
     #define Z  P[1]; // zero  flag, result of any operation is zero
     #define I  P[2]; // interrupt disable flag, serve to mask any interruption, it's set by SEI instruction, and clear by CLI instruction
@@ -32,35 +24,29 @@ typedef struct vtr vetor;
   3 - the IO registers()
   4 - the PPU control the devices
 */
- void memory_map(*uint16_t addr/*remaining memory*/){
-   if((*addr) > 0x0 | (*addr)<=0x00FF){ //zero page
-              
-   }if((*addr) > 0x01FF | (*addr)<=0x01FF){
-              
-   }
+void rom_size(int *tam,ifstream *rom){ // get the line numbers of file
+    (*rom).seekg(0,(*rom).end);
+    *tam = (*rom).tellg();
+    *tam = *tam/(16*(sizeof(uint8_t)));
+    (*rom).seekg(0,(*rom).beg);
 
- }
+}
+void read_romfile(ifstream *rom){
+
+
+}
+
 int main(int argc, char* argv[])
 {
-    //vector<vetor> MEM[16];
-    uint16_t PC; // the program counter, your responsability is keep the flow control
-    uint8_t SP; // the stack pointer, keep pointer to the stack execution
-    uint8_t A; // the acumulator registrer, store results of arithmetic and logic operations
-    uint8_t X,Y; // index of register; 1 byte for each one  (op op | xx xx | yy yy)
-    uint8_t P; // processor status last operation, flag of 1 bit
-    uint8_t opcode; // the first byte is the opcode
-    uint8_t bin;
-    uint16_t map_mem[65536]; // map memory address
+    uint8_t SP,A,X,Y,P,bin,opcode;
+    uint16_t PC,memory_map[0xFFFF+1],reset,linha = 0xC000;
     bitset<8> PRG_size_ROM,CHR_size_ROM,CHR_size_RAM,Flag_six,Flag_seven,Flag_nine,Flag_ten; // 16kb units,8kb units, if zero uses CHR RAM of 8 kb units.
     ifstream rom;
-    int i,j=0,tam;
-     int c = 0;
+    int i =1,j=0,tam;
     rom.open("nestest.nes", ios::binary | ios::in);
-    rom.seekg(0,rom.end);
-    tam = rom.tellg(); // lenght in bytes
-    tam = tam/(16*(sizeof(uint8_t))); //line numbers of file
+    rom_size(&tam,&rom);
     bitset<8> MEM[tam][16] = {0};
-    rom.seekg(0,rom.beg);
+
     if (!rom.is_open()){
           cout<<" nao foi possivel abrir o arquivo\n";
           return 0;
@@ -80,16 +66,24 @@ int main(int argc, char* argv[])
          CHR_size_RAM = MEM[0][8];
          cout<<"entrei"<<endl;
       }
+      i = 1;
     while(!(rom.eof())){ // reading byte by byte, fill the remaining data on MEM
-        for(int i = 1;i<0x10;i++){
+        for(j = 0;j<0x10;j++){
           rom >> noskipws>> bin;
           bitset<8> a(bin);
           MEM[i][j] = a.to_ulong();
-         // cout << "bin " <<hex<< MEM[i][j].to_ulong()<< endl;
         }
-        j++;
+        i++;
 
     }
+    for(i = 1;i<(PRG_size_ROM.to_ulong() * (1024));i++){ // copy of PRG data to unit of size 16kb to last memory map
+      for(j =0;j<0x10;j++){
+        memory_map[linha] = MEM[i][j].to_ulong();
+        linha++;
+      }
+      linha++;
+      }
+      reset = (memory_map[0xFFFD] << 8) | memory_map[0xFFFC]; // first instruction of file (little endian)
     rom.close();
     return 0;
 }
