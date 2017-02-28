@@ -1061,8 +1061,124 @@ void eor_op(uint8_t *A,uint16_t *memory_map,uint16_t *PC,int type,int *P,uint8_t
    break;
  }
 }
-void inc_op(){
-  
+void inc_op(uint8_t *A,uint16_t *memory_map,uint16_t *PC,int type,int *P,uint8_t *X,uint8_t *Y){
+  (*PC)++;
+   uint8_t b1,b2;
+             uint16_t b3;
+  switch(type){
+        case 1:
+           memory_map[*PC]++;
+           for(int i = 0;i<5;i++){
+              if (memory_map[*PC] == 0x00){
+         *P = *P | 0x02;
+         *P = *P & 0x7F;
+   }else if(memory_map[*PC] < 0x00){
+         *P = *P | 0x80;
+         *P = *P & 0x7D;
+   }
+}
+break;
+case 2:
+ memory_map[(*PC)+(*X)]++;
+           for(int i = 0;i<6;i++){
+              if (memory_map[(*PC)+(*X)] == 0x00){
+         *P = *P | 0x02;
+         *P = *P & 0x7F;
+   }else if(memory_map[(*PC)+(*X)] < 0x00){
+         *P = *P | 0x80;
+         *P = *P & 0x7D;
+   }
+}
+break;
+case 3:
+   b1 = memory_map[(*PC)];
+  (*PC)++;
+  b2 = memory_map[(*PC)];
+  b3 = (b2 << 8) | b1; // 2bytes b2b1 little endian
+  memory_map[b1]++;
+   for(int i = 0;i<6;i++){
+              if (memory_map[b1] == 0x00){
+         *P = *P | 0x02;
+         *P = *P & 0x7F;
+   }else if(memory_map[b1] < 0x00){
+         *P = *P | 0x80;
+         *P = *P & 0x7D;
+   }
+}
+break;
+case 4:
+ b1 = memory_map[(*PC)];
+  (*PC)++;
+  b2 = memory_map[(*PC)];
+  b3 = (b2 << 8) | b1; // 2bytes b2b1 little endian
+  memory_map[b1 +(*X)]++;
+   for(int i = 0;i<7;i++){
+              if (memory_map[b1 +(*X)] == 0x00){
+         *P = *P | 0x02;
+         *P = *P & 0x7F;
+   }else if(memory_map[b1 +(*X)] < 0x00){
+         *P = *P | 0x80;
+         *P = *P & 0x7D;
+   }
+}
+break;
+}
+}
+void inx_op(uint8_t *A,uint16_t *memory_map,uint16_t *PC,int type,int *P,uint8_t *X,uint8_t *Y){
+  (*X)++;
+  if (*X == 0){
+         *P = *P | 0x02;
+         *P = *P & 0x7F;
+  }else if (*X < 0){
+         *P = *P | 0x80;
+         *P = *P & 0x7D;
+  }
+}
+void iny_op(uint8_t *A,uint16_t *memory_map,uint16_t *PC,int type,int *P,uint8_t *X,uint8_t *Y){
+  (*Y)++;
+  if (*Y == 0){
+         *P = *P | 0x02;
+         *P = *P & 0x7F;
+  }else if (*Y < 0){
+         *P = *P | 0x80;
+         *P = *P & 0x7D;
+  }
+}
+void jmp_op(uint8_t *A,uint16_t *memory_map,uint16_t *PC,int type,int *P,uint8_t *X,uint8_t *Y){
+    uint8_t b1,b2;
+    uint16_t b3;
+   (*PC)++;
+  b1 = memory_map[(*PC)];
+  (*PC)++;
+  b2 = memory_map[(*PC)];
+  b3 = (b2 << 8) | b1; // 2bytes b2b1 little endian
+  switch(type){
+    case 3:
+    for(int i =0;i<3;i++){
+        *PC = b3;
+    }
+      break;
+    case 6: // indirect mode (6 or 7)
+       for(int i =0;i<3;i++){
+        *PC = memory_map[b3];
+    }
+    break;
+  }
+}
+void jsr_op(uint8_t *A,uint16_t *memory_map,uint16_t *PC,int type,int *P,uint8_t *X,uint8_t *Y,uint8_t *SP){
+    uint8_t b1,b2;
+    uint16_t b3;
+  uint8_t bck;
+  (*SP)--;
+  (*PC)++;
+  b1 = memory_map[(*PC)];
+  (*PC)++;
+  b2 = memory_map[(*PC)];
+  b3 = (b2 << 8) | b1; // 2bytes b2b1 little endian
+  bck = *PC; // save the actual context before jump to new address
+    for(int i =0;i<6;i++){
+        *PC = b3;
+    }
 }
 void rom_size(int *tam,ifstream *rom){ // get the line numbers of file
     (*rom).seekg(0,(*rom).end);
