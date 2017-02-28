@@ -31,11 +31,1050 @@ void rom_size(int *tam,ifstream *rom){ // get the line numbers of file
     (*rom).seekg(0,(*rom).beg);
 
 }
-void read_romfile(ifstream *rom){
+#include<stdio.h>
+  #include<stdlib.h>
+  #include<fstream>
+  #include<iostream>
+  #include<vector>
+  #include <bitset>
+  #include <iomanip>
+
+using namespace std;
+/*
+ This modifications are to simplify the implementations of instructions set
+  ADDRESSING MODES CODIFICATIONS
+  0 - IMMEDIATE
+  1 - ZERO PAGE
+  2 - ZERO PAGE,X
+  3 - ABSOLUTE
+  4 - ABSOLUTE,X
+  5 - ABSOLUTE,Y
+  6 - INDIRECT,X
+  7 - INDIRECT,Y
+*/
+void adc_op(uint8_t *A,uint16_t *memory_map,uint16_t *PC,int type,int *P,uint8_t *X,uint8_t *Y){  // perform the operation between acummulator with immediate value
+   (*PC)++;
+   switch(type){
+       case 0:
+           for(int i = 0;i<2;i++){ // two cycles for this operation
+             *A = (*A) + (memory_map[(*PC)]);
+             if (*A > 0xFF){ // carry
+                 *P = *P | 0x01;
+             }
+             else{
+                *P = *P & 0xFE;
+             }
+           }
+              break;
+       case 1:
+           for(int i = 0;i<3;i++){ // three cycles for this operation
+             *A = (*A) + (memory_map[(*PC)]);
+             if (*A > 0xFF){ // carry
+                 *P = *P | 0x01;
+             }
+             else{
+                *P = *P & 0xFE;
+             }
+           }
+              break;
+       case 2:
+             for(int i = 0;i<4;i++){ // four cycles for this operation
+             *A = (*A) + (memory_map[(*PC) + (*X)]);
+             if (*A > 0xFF){ // carry
+                 *P = *P | 0x01;
+             }
+             else{
+                *P = *P & 0xFE;
+             }
+           }
+              break;
+       case 3:
+        uint8_t b1,b2;
+             uint16_t b3;
+             b1 = memory_map[(*PC)];
+             (*PC)++;
+             b2 = memory_map[(*PC)];
+             b3 = (b2 << 8) | b1; // 2bytes b2b1 little endian
+             *A = (*A) + (memory_map[(b1)]);
+        for(int i = 0;i<4;i++){ // four cycles for this operation
+             if (*A > 0xFF){ // carry
+                 *P = *P | 0x01;
+             }
+             else{
+                *P = *P & 0xFE;
+             }
+           }
+              break;
+       case 4:
+            for(int i = 0;i<4;i++){ // four cycles for this operation + 1 if page crossed
+             uint8_t b1,b2;
+             uint16_t b3;
+             b1 = memory_map[(*PC)];
+             (*PC)++;
+             b2 = memory_map[(*PC)];
+             b3 = (b2 << 8) | b1; // 2bytes b2b1 little endian
+             *A = (*A) + (memory_map[(b1)+(*X)]);
+             if (*A > 0xFF){ // carry
+                 *P = *P | 0x01;
+             }
+             else{
+                *P = *P & 0xFE;
+             }
+           }
+              break;
+       case 5:
+        for(int i = 0;i<5;i++){ // four cycles for this operation + 1 if page crossed
+             uint8_t b1,b2;
+             uint16_t b3;
+             b1 = memory_map[(*PC)];
+             (*PC)++;
+             b2 = memory_map[(*PC)];
+             b3 = (b2 << 8) | b1; // 2bytes b2b1 little endian
+             *A = (*A) + (memory_map[(b1)+(*Y)]);
+             if (*A > 0xFF){ // carry
+                 *P = *P | 0x01;
+             }
+             else{
+                *P = *P & 0xFE;
+             }
+           }
+              break;
+       case 6:
+           for(int i = 0;i<6;i++){ // six cycles for this operation
+             uint8_t b1,b2;
+             uint16_t b3;
+             *A = (*A) + (memory_map[(*PC)+(*X)]);
+             if (*A > 0xFF){ // carry
+                 *P = *P | 0x01;
+             }
+             else{
+                *P = *P & 0xFE;
+             }
+           }
+              break;
+       case 7:
+        for(int i = 0;i<5;i++){ // six cycles for this operation + 1 if page crossed
+             uint8_t b1,b2;
+             uint16_t b3;
+             *A = (*A) + (memory_map[(*PC)+(*Y)]);
+             if (*A > 0xFF){ // carry
+                 *P = *P | 0x01;
+             }
+             else{
+                *P = *P & 0xFE;
+             }
+           }
+              break;
+   }
 
 
 }
+void and_op(uint8_t *A,uint16_t *memory_map,uint16_t *PC,int type,int *P,uint8_t *X,uint8_t *Y){  // perform the operation between acummulator with immediate value
+   (*PC)++;
+   switch(type){
+       case 0:
+           for(int i = 0;i<2;i++){ // two cycles for this operation
+             *A = (*A) & (memory_map[(*PC)]);
+             if (*A <= 0x00){ // zero
+                    if(*A == 0x00){
+                      *P = *P | 0x02;
+                    } else if(*A < 0x00){ //negative flag
+                         *P = *P | 0x80;
 
+                    }
+             }
+             else{
+                *P = *P & 0x7D;
+
+             }
+           }
+              break;
+       case 1:
+           for(int i = 0;i<3;i++){ // three cycles for this operation
+             *A = (*A) & (memory_map[(*PC)]);
+                 if (*A <= 0x00){ // zero
+                    if(*A == 0x00){
+                      *P = *P | 0x02;
+                    } else if(*A < 0x00){ //negative flag
+                         *P = *P | 0x80;
+
+                    }
+             }
+             else{
+                *P = *P & 0x7D;
+
+             }
+           }
+              break;
+       case 2:
+             for(int i = 0;i<4;i++){ // four cycles for this operation
+             *A = (*A) & (memory_map[(*PC) + (*X)]);
+                 if (*A <= 0x00){ // zero
+                    if(*A == 0x00){
+                      *P = *P | 0x02;
+                    } else if(*A < 0x00){ //negative flag
+                         *P = *P | 0x80;
+
+                    }
+             }
+             else{
+                *P = *P & 0x7D;
+
+             }
+           }
+              break;
+       case 3:
+        for(int i = 0;i<4;i++){ // four cycles for this operation
+             uint8_t b1,b2;
+             uint16_t b3;
+             b1 = memory_map[(*PC)];
+             (*PC)++;
+             b2 = memory_map[(*PC)];
+             b3 = (b2 << 8) | b1; // 2bytes b2b1 little endian
+             *A = (*A) & (memory_map[(b1)]);
+                   if (*A <= 0x00){ // zero
+                    if(*A == 0x00){
+                      *P = *P | 0x02;
+                    } else if(*A < 0x00){ //negative flag
+                         *P = *P | 0x80;
+
+                    }
+             }
+             else{
+                *P = *P & 0x7D;
+
+             }
+           }
+              break;
+       case 4:
+            for(int i = 0;i<4;i++){ // four cycles for this operation + 1 if page crossed
+             uint8_t b1,b2;
+             uint16_t b3;
+             b1 = memory_map[(*PC)];
+             (*PC)++;
+             b2 = memory_map[(*PC)];
+             b3 = (b2 << 8) | b1; // 2bytes b2b1 little endian
+             *A = (*A) & (memory_map[(b1)+(*X)]);
+                  if (*A <= 0x00){ // zero
+                    if(*A == 0x00){
+                      *P = *P | 0x02;
+                    } else if(*A < 0x00){ //negative flag
+                         *P = *P | 0x80;
+
+                    }
+             }
+             else{
+                *P = *P & 0x7D;
+
+             }
+           }
+              break;
+       case 5:
+        for(int i = 0;i<5;i++){ // four cycles for this operation + 1 if page crossed
+             uint8_t b1,b2;
+             uint16_t b3;
+             b1 = memory_map[(*PC)];
+             (*PC)++;
+             b2 = memory_map[(*PC)];
+             b3 = (b2 << 8) | b1; // 2bytes b2b1 little endian
+             *A = (*A) & (memory_map[(b1)+(*Y)]);
+                  if (*A <= 0x00){ // zero
+                    if(*A == 0x00){
+                      *P = *P | 0x02;
+                    } else if(*A < 0x00){ //negative flag
+                         *P = *P | 0x80;
+
+                    }
+             }
+             else{
+                *P = *P & 0x7D;
+
+             }
+           }
+              break;
+       case 6:
+           for(int i = 0;i<6;i++){ // six cycles for this operation
+             uint8_t b1,b2;
+             uint16_t b3;
+             *A = (*A) & (memory_map[(*PC)+(*X)]);
+                  if (*A <= 0x00){ // zero
+                    if(*A == 0x00){
+                      *P = *P | 0x02;
+                    } else if(*A < 0x00){ //negative flag
+                         *P = *P | 0x80;
+
+                    }
+             }
+             else{
+                *P = *P & 0x7D;
+
+             }
+           }
+              break;
+       case 7:
+        for(int i = 0;i<5;i++){ // six cycles for this operation + 1 if page crossed
+             uint8_t b1,b2;
+             uint16_t b3;
+             *A = (*A) & (memory_map[(*PC)+(*Y)]);
+                   if (*A <= 0x00){ // zero
+                    if(*A == 0x00){
+                      *P = *P | 0x02;
+                    } else if(*A < 0x00){ //negative flag
+                         *P = *P | 0x80;
+
+                    }
+             }
+             else{
+                *P = *P & 0x7D;
+
+             }
+           }
+              break;
+   }
+
+
+}
+void asl_op(uint8_t *A,uint16_t *memory_map,uint16_t *PC,int type,int *P,uint8_t *X,uint8_t *Y){
+    switch(type){
+       case 0:
+           for(int i = 0;i<2;i++){ // two cycles for this operation
+             *A = (*A) << 1;
+             if (*A <= 0x00){ // zero
+                    if(*A == 0x00){
+                      *P = *P | 0x02;
+                      *P = *P & 0xFE;
+                    } else if(*A < 0x00){ //negative flag
+                         *P = *P | 0x80;
+                         *P = *P & 0xFE;
+
+                    }
+                  }
+              else if (*A>0xFF){ //carry
+                   *P = *P | 0x01;
+                   *P = *P & 0x7D;
+              }
+
+       }
+       break;
+       case 1:
+             for(int i = 0;i<5;i++){ // three cycles for this operation
+             *A = (memory_map[(*PC)]) << 1;
+                 if (*A <= 0x00){ // zero
+                    if(*A == 0x00){
+                      *P = *P | 0x02;
+                      *P = *P & 0xFE;
+                    } else if(*A < 0x00){ //negative flag
+                         *P = *P | 0x80;
+                         *P = *P & 0xFE;
+
+                    }
+                  }
+              else if (*A>0xFF){ //carry
+                   *P = *P | 0x01;
+                   *P = *P & 0x7D;
+              }
+           }
+              break;
+       case 2:
+            for(int i = 0;i<6;i++){ // four cycles for this operation
+             *A = (memory_map[(*PC) + (*X)]) << 1;
+                if (*A <= 0x00){ // zero
+                    if(*A == 0x00){
+                      *P = *P | 0x02;
+                      *P = *P & 0xFE;
+                    } else if(*A < 0x00){ //negative flag
+                         *P = *P | 0x80;
+                         *P = *P & 0xFE;
+
+                    }
+                  }
+              else if (*A>0xFF){ //carry
+                   *P = *P | 0x01;
+                   *P = *P & 0x7D;
+              }
+           }
+              break;
+       case 3:
+         for(int i = 0;i<6;i++){ // four cycles for this operation
+             uint8_t b1,b2;
+             uint16_t b3;
+             b1 = memory_map[(*PC)];
+             (*PC)++;
+             b2 = memory_map[(*PC)];
+             b3 = (b2 << 8) | b1; // 2bytes b2b1 little endian
+             *A = (memory_map[(b1)]) << 1;
+                   if (*A <= 0x00){ // zero
+                    if(*A == 0x00){
+                      *P = *P | 0x02;
+                      *P = *P & 0xFE;
+                    } else if(*A < 0x00){ //negative flag
+                         *P = *P | 0x80;
+                         *P = *P & 0xFE;
+
+                    }
+                  }
+              else if (*A>0xFF){ //carry
+                   *P = *P | 0x01;
+                   *P = *P & 0x7D;
+              }
+           }
+              break;
+       case 4:
+         for(int i = 0;i<6;i++){ // four cycles for this operation + 1 if page crossed
+             uint8_t b1,b2;
+             uint16_t b3;
+             b1 = memory_map[(*PC)];
+             (*PC)++;
+             b2 = memory_map[(*PC)];
+             b3 = (b2 << 8) | b1; // 2bytes b2b1 little endian
+             *A = (memory_map[(b1)+(*Y)])<<1;
+                   if (*A <= 0x00){ // zero
+                    if(*A == 0x00){
+                      *P = *P | 0x02;
+                      *P = *P & 0xFE;
+                    } else if(*A < 0x00){ //negative flag
+                         *P = *P | 0x80;
+                         *P = *P & 0xFE;
+
+                    }
+                  }
+              else if (*A>0xFF){ //carry
+                   *P = *P | 0x01;
+                   *P = *P & 0x7D;
+              }
+           }
+              break;
+       default:
+           cout <<"erro"<<endl;
+}
+}
+void bcc_op(uint8_t *A,uint16_t *memory_map,uint16_t *PC,int type,int *P,uint8_t *X,uint8_t *Y){
+  uint8_t b1,b2;
+  uint16_t b3;
+  b1 = memory_map[(*PC)];
+  (*PC)++;
+  b2 = memory_map[(*PC)];
+  b3 = (b2 << 8) | b1;
+  for (int i =0;i<2;i++){ //
+  if ((*P & 0x01) == 0x00){
+      *PC = b3;
+  }else{
+   (*PC)++;
+  }
+
+}
+  }
+void bcs_op(uint8_t *A,uint16_t *memory_map,uint16_t *PC,int type,int *P,uint8_t *X,uint8_t *Y){
+  uint8_t b1,b2;
+  uint16_t b3;
+  b1 = memory_map[(*PC)];
+  (*PC)++;
+  b2 = memory_map[(*PC)];
+  b3 = (b2 << 8) | b1;
+  for (int i =0;i<2;i++){
+  if ((*P & 0x01) == 0x01){
+      *PC = b3;
+  }else{
+   (*PC)++;
+  }
+}
+}
+void beq_op(uint8_t *A,uint16_t *memory_map,uint16_t *PC,int type,int *P,uint8_t *X,uint8_t *Y){
+  uint8_t b1 = memory_map[(*PC)];
+  for (int i =0;i<2;i++){
+  if ((*P & 0x02) == 0x02){
+      *PC = b1;
+  }else{
+   (*PC)++;
+  }
+}
+}
+void bit_op(uint8_t *A,uint16_t *memory_map,uint16_t *PC,int type,int *P,uint8_t *X,uint8_t *Y){
+    *P = *P | ((memory_map[(*PC)])& 0x80)>>7; // N-> M7
+    *P = *P | ((memory_map[(*PC)])& 0x40)>>6; // V-> M6
+    for (int i =0;i<2;i++){
+          if ((*A & memory_map[(*PC)]) == 0x00){
+    *P = *P | 0x02;
+  }else{
+    *P = *P & 0xFD;
+  }
+    }
+}
+void bmi_op(uint8_t *A,uint16_t *memory_map,uint16_t *PC,int type,int *P,uint8_t *X,uint8_t *Y){
+     uint8_t b1 = memory_map[(*PC)];
+     for(int i = 0;i<2;i++){
+   if (((*P & 0x80)>>7) == 1){
+     *PC = b1;
+  }else{
+   *PC++;
+  }
+     }
+}
+void bne_op(uint8_t *A,uint16_t *memory_map,uint16_t *PC,int type,int *P,uint8_t *X,uint8_t *Y){
+uint8_t b1 = memory_map[(*PC)];
+     for(int i = 0;i<2;i++){
+   if (((*P & 0x02)>>1) == 0){
+     *PC = b1;
+  }else{
+   *PC++;
+  }
+     }
+}
+void bpl_op(uint8_t *A,uint16_t *memory_map,uint16_t *PC,int type,int *P,uint8_t *X,uint8_t *Y){
+  uint8_t b1 = memory_map[(*PC)];
+     for(int i = 0;i<2;i++){
+   if (((*P & 0x80)>>7) == 0){
+     *PC = b1;
+  }else{
+   *PC++;
+  }
+     }
+}
+void brk_op(uint8_t *A,uint16_t *memory_map,uint16_t *PC,int type,int *P,uint8_t *X,uint8_t *Y){
+    for(int i =0;i<7;i++){
+    if(((*P & 0x04)>>3)== 1){
+    // set flag to exit processor
+  }else{
+   // dont exit processor
+  }
+
+    }
+
+}
+void bvc_op(uint8_t *A,uint16_t *memory_map,uint16_t *PC,int type,int *P,uint8_t *X,uint8_t *Y){
+  uint8_t b1 = memory_map[(*PC)];
+  for(int i =0;i<2;i++){
+    if(((*P & 0x40)>>6)== 0){
+      *PC = b1;
+  }else{
+    (*PC)++;
+  }
+  }
+}
+void bvs_op(uint8_t *A,uint16_t *memory_map,uint16_t *PC,int type,int *P,uint8_t *X,uint8_t *Y){
+  uint8_t b1 = memory_map[(*PC)];
+  for(int i =0;i<2;i++){
+    if(((*P & 0x40)>>6)== 1){
+      *PC = b1;
+  }else{
+    (*PC)++;
+  }
+  }
+}
+void clc_op(uint8_t *A,uint16_t *memory_map,uint16_t *PC,int type,int *P,uint8_t *X,uint8_t *Y){
+  for (int i =0;i<2;i++){
+      *P = *P & 0xFE;
+  }
+}
+void cld_op(uint8_t *A,uint16_t *memory_map,uint16_t *PC,int type,int *P,uint8_t *X,uint8_t *Y){
+   for (int i =0;i<2;i++){
+      *P = *P & 0xF7;
+  }
+}
+void cli_op(uint8_t *A,uint16_t *memory_map,uint16_t *PC,int type,int *P,uint8_t *X,uint8_t *Y){
+   for (int i =0;i<2;i++){
+      *P = *P & 0xFB;
+  }
+}
+void clv_op(uint8_t *A,uint16_t *memory_map,uint16_t *PC,int type,int *P,uint8_t *X,uint8_t *Y){
+   for (int i =0;i<2;i++){
+      *P = *P & 0xBF;
+  }
+}
+void cmp_op(uint8_t *A,uint16_t *memory_map,uint16_t *PC,int type,int *P,uint8_t *X,uint8_t *Y){
+    uint8_t b1,b2;
+             uint16_t b3;
+             (*PC)++;
+   switch(type){
+             case 0:
+           for(int i = 0;i<2;i++){ // two cycles for this operation
+               if(*A == memory_map[*PC]){
+                  *P = *P | (0x02); //zero
+                  *P = *P & (0x7F); // negative
+                  *P = *P & (0xBF); // overflow
+               }else if(*A < memory_map[*PC]){
+                  *P = *P & 0xFD;   //zero
+                  *P = *P | (0x80); // negative
+                  *P = *P & (0xBF); // overflow
+               }else if(*A > memory_map[*PC]){
+                  *P = *P & 0xFD;   //zero
+                  *P = *P & (0x7F); // negative
+                  *P = *P | (0x40); // overflow
+               }
+            }
+         break;
+    case 1:
+            for(int i = 0;i<3;i++){ // three cycles for this operation
+               if(*A == memory_map[*PC]){
+                  *P = *P | (0x02); //zero
+                  *P = *P & (0x7F); // negative
+                  *P = *P & (0xBF); // overflow
+               }else if(*A < memory_map[*PC]){
+                  *P = *P & 0xFD;   //zero
+                  *P = *P | (0x80); // negative
+                  *P = *P & (0xBF); // overflow
+               }else if(*A > memory_map[*PC]){
+                  *P = *P & 0xFD;   //zero
+                  *P = *P & (0x7F); // negative
+                  *P = *P | (0x40); // overflow
+               }
+            }
+        break;
+    case 2:
+    for(int i = 0;i<4;i++){ // four cycles for this operation
+               if(*A == memory_map[(*PC)+(*X)]){
+                  *P = *P | (0x02); //zero
+                  *P = *P & (0x7F); // negative
+                  *P = *P & (0xBF); // overflow
+               }else if(*A < memory_map[(*PC)+(*X)]){
+                  *P = *P & 0xFD;   //zero
+                  *P = *P | (0x80); // negative
+                  *P = *P & (0xBF); // overflow
+               }else if(*A > memory_map[(*PC)+(*X)]){
+                  *P = *P & 0xFD;   //zero
+                  *P = *P & (0x7F); // negative
+                  *P = *P | (0x40); // overflow
+               }
+            }
+        break;
+        case 3:
+             b1 = memory_map[(*PC)];
+             (*PC)++;
+             b2 = memory_map[(*PC)];
+             b3 = (b2 << 8) | b1; // 2bytes b2b1 little endian
+        for(int i = 0;i<4;i++){ // four cycles for this operation
+               if(*A == memory_map[b3]){
+                  *P = *P | (0x02); //zero
+                  *P = *P & (0x7F); // negative
+                  *P = *P & (0xBF); // overflow
+               }else if(*A < memory_map[b3]){
+                  *P = *P & 0xFD;   //zero
+                  *P = *P | (0x80); // negative
+                  *P = *P & (0xBF); // overflow
+               }else if(*A > memory_map[b3]){
+                  *P = *P & 0xFD;   //zero
+                  *P = *P & (0x7F); // negative
+                  *P = *P | (0x40); // overflow
+               }
+            }
+         break;
+         case 4:
+             b1 = memory_map[(*PC)];
+             (*PC)++;
+             b2 = memory_map[(*PC)];
+             b3 = (b2 << 8) | b1; // 2bytes b2b1 little endian
+          for(int i = 0;i<4;i++){ // four cycles for this operation + 1 if page crossed
+               if(*A == memory_map[b3+(*X)]){
+                  *P = *P | (0x02); //zero
+                  *P = *P & (0x7F); // negative
+                  *P = *P & (0xBF); // overflow
+               }else if(*A < memory_map[b3+(*X)]){
+                  *P = *P & 0xFD;   //zero
+                  *P = *P | (0x80); // negative
+                  *P = *P & (0xBF); // overflow
+               }else if(*A > memory_map[b3+(*X)]){
+                  *P = *P & 0xFD;   //zero
+                  *P = *P & (0x7F); // negative
+                  *P = *P | (0x40); // overflow
+               }
+            }
+            break;
+        case 5:
+             b1 = memory_map[(*PC)];
+             (*PC)++;
+             b2 = memory_map[(*PC)];
+             b3 = (b2 << 8) | b1; // 2bytes b2b1 little endian
+         for(int i = 0;i<4;i++){ // four cycles for this operation + 1 if page crossed
+               if(*A == memory_map[b3+(*Y)]){
+                  *P = *P | (0x02); //zero
+                  *P = *P & (0x7F); // negative
+                  *P = *P & (0xBF); // overflow
+               }else if(*A < memory_map[b3+(*Y)]){
+                  *P = *P & 0xFD;   //zero
+                  *P = *P | (0x80); // negative
+                  *P = *P & (0xBF); // overflow
+               }else if(*A > memory_map[b3+(*Y)]){
+                  *P = *P & 0xFD;   //zero
+                  *P = *P & (0x7F); // negative
+                  *P = *P | (0x40); // overflow
+               }
+            }
+            break;
+        case 6:
+             for(int i = 0;i<6;i++){ // six cycles for this operation
+               if(*A == memory_map[(*PC)+(*X)]){
+                  *P = *P | (0x02); //zero
+                  *P = *P & (0x7F); // negative
+                  *P = *P & (0xBF); // overflow
+               }else if(*A < memory_map[(*PC)+(*X)]){
+                  *P = *P & 0xFD;   //zero
+                  *P = *P | (0x80); // negative
+                  *P = *P & (0xBF); // overflow
+               }else if(*A > memory_map[(*PC)+(*X)]){
+                  *P = *P & 0xFD;   //zero
+                  *P = *P & (0x7F); // negative
+                  *P = *P | (0x40); // overflow
+               }
+            }
+            break;
+         case 7:
+               for(int i = 0;i<5;i++){ // five cycles for this operation + 1 if page crossed
+               if(*A == memory_map[(*PC)+(*Y)]){
+                  *P = *P | (0x02); //zero
+                  *P = *P & (0x7F); // negative
+                  *P = *P & (0xBF); // overflow
+               }else if(*A < memory_map[(*PC)+(*Y)]){
+                  *P = *P & 0xFD;   //zero
+                  *P = *P | (0x80); // negative
+                  *P = *P & (0xBF); // overflow
+               }else if(*A > memory_map[(*PC)+(*Y)]){
+                  *P = *P & 0xFD;   //zero
+                  *P = *P & (0x7F); // negative
+                  *P = *P | (0x40); // overflow
+               }
+            }
+            break;
+          }
+        }
+void cpx_op(uint8_t *A,uint16_t *memory_map,uint16_t *PC,int type,int *P,uint8_t *X,uint8_t *Y){
+  switch(type){
+    case 0:
+       for(int i = 0;i<2;i++){ // two cycles for this operation
+               if(*X == memory_map[(*PC)]){
+                  *P = *P | (0x02); //zero
+                  *P = *P & (0x7F); // negative
+                  *P = *P & (0xBF); // overflow
+               }else if(*X < memory_map[(*PC)]){
+                  *P = *P & 0xFD;   //zero
+                  *P = *P | (0x80); // negative
+                  *P = *P & (0xBF); // overflow
+               }else if(*X > memory_map[(*PC)]){
+                  *P = *P & 0xFD;   //zero
+                  *P = *P & (0x7F); // negative
+                  *P = *P | (0x40); // overflow
+               }
+            }
+            break;
+     case 1:
+  for(int i = 0;i<3;i++){ // three cycles for this operation
+               if(*X == memory_map[(*PC)]){
+                  *P = *P | (0x02); //zero
+                  *P = *P & (0x7F); // negative
+                  *P = *P & (0xBF); // overflow
+               }else if(*X < memory_map[(*PC)]){
+                  *P = *P & 0xFD;   //zero
+                  *P = *P | (0x80); // negative
+                  *P = *P & (0xBF); // overflow
+               }else if(*X > memory_map[(*PC)]){
+                  *P = *P & 0xFD;   //zero
+                  *P = *P & (0x7F); // negative
+                  *P = *P | (0x40); // overflow
+               }
+            }
+            break;
+     case 3:
+             uint8_t b1,b2;
+             uint16_t b3;
+             b1 = memory_map[(*PC)];
+             (*PC)++;
+             b2 = memory_map[(*PC)];
+             b3 = (b2 << 8) | b1; // 2bytes b2b1 little endian
+  for(int i = 0;i<4;i++){ // four cycles for this operation
+               if(*X == memory_map[b3]){
+                  *P = *P | (0x02); //zero
+                  *P = *P & (0x7F); // negative
+                  *P = *P & (0xBF); // overflow
+               }else if(*X < memory_map[b3]){
+                  *P = *P & 0xFD;   //zero
+                  *P = *P | (0x80); // negative
+                  *P = *P & (0xBF); // overflow
+               }else if(*X > memory_map[b3]){
+                  *P = *P & 0xFD;   //zero
+                  *P = *P & (0x7F); // negative
+                  *P = *P | (0x40); // overflow
+               }
+            }
+            break;
+
+  }
+
+}
+void cpy_op(uint8_t *A,uint16_t *memory_map,uint16_t *PC,int type,int *P,uint8_t *X,uint8_t *Y){
+   switch(type){
+    case 0:
+       for(int i = 0;i<2;i++){ // two cycles for this operation
+               if(*X == memory_map[(*PC)]){
+                  *P = *P | (0x02); //zero
+                  *P = *P & (0x7F); // negative
+                  *P = *P & (0xBF); // overflow
+               }else if(*X < memory_map[(*PC)]){
+                  *P = *P & 0xFD;   //zero
+                  *P = *P | (0x80); // negative
+                  *P = *P & (0xBF); // overflow
+               }else if(*X > memory_map[(*PC)]){
+                  *P = *P & 0xFD;   //zero
+                  *P = *P & (0x7F); // negative
+                  *P = *P | (0x40); // overflow
+               }
+            }
+            break;
+     case 1:
+  for(int i = 0;i<3;i++){ // three cycles for this operation
+               if(*X == memory_map[(*PC)]){
+                  *P = *P | (0x02); //zero
+                  *P = *P & (0x7F); // negative
+                  *P = *P & (0xBF); // overflow
+               }else if(*X < memory_map[(*PC)]){
+                  *P = *P & 0xFD;   //zero
+                  *P = *P | (0x80); // negative
+                  *P = *P & (0xBF); // overflow
+               }else if(*X > memory_map[(*PC)]){
+                  *P = *P & 0xFD;   //zero
+                  *P = *P & (0x7F); // negative
+                  *P = *P | (0x40); // overflow
+               }
+            }
+            break;
+     case 3:
+             uint8_t b1,b2;
+             uint16_t b3;
+             b1 = memory_map[(*PC)];
+             (*PC)++;
+             b2 = memory_map[(*PC)];
+             b3 = (b2 << 8) | b1; // 2bytes b2b1 little endian
+  for(int i = 0;i<4;i++){ // four cycles for this operation
+               if(*X == memory_map[b3]){
+                  *P = *P | (0x02); //zero
+                  *P = *P & (0x7F); // negative
+                  *P = *P & (0xBF); // overflow
+               }else if(*X < memory_map[b3]){
+                  *P = *P & 0xFD;   //zero
+                  *P = *P | (0x80); // negative
+                  *P = *P & (0xBF); // overflow
+               }else if(*X > memory_map[b3]){
+                  *P = *P & 0xFD;   //zero
+                  *P = *P & (0x7F); // negative
+                  *P = *P | (0x40); // overflow
+               }
+            }
+            break;
+
+  }
+
+}
+void dec_op(uint8_t *A,uint16_t *memory_map,uint16_t *PC,int type,int *P,uint8_t *X,uint8_t *Y){
+    uint8_t b1,b2;
+    uint16_t b3;
+  switch(type){
+    case 1:
+      memory_map[*PC]--;
+    for(int i = 0; i< 5;i++){
+          if (memory_map[*PC] == 0){
+                    *P = *P | 0x02;
+                    *P = *P & 0x7F;
+          }else if(memory_map[*PC] < 0){
+                   *P = *P | 0x80;
+                   *P = *P & 0xFD;
+          }
+         }
+          break;
+           case 2:
+            memory_map[(*PC)+(*X)]--;
+            for(int i = 0; i< 6;i++){
+          if (memory_map[(*PC)+(*X)] == 0){
+                    *P = *P | 0x02;
+                    *P = *P & 0x7F;
+          }else if(memory_map[(*PC)+(*X)] < 0){
+                   *P = *P | 0x80;
+                   *P = *P & 0xFD;
+          }
+        }
+          break;
+          case 3:
+             b1 = memory_map[(*PC)];
+             (*PC)++;
+             b2 = memory_map[(*PC)];
+             b3 = (b2 << 8) | b1; // 2bytes b2b1 little endian
+            memory_map[b3]--;
+            for(int i = 0; i< 6;i++){
+          if (memory_map[b3+(*X)] == 0){
+                    *P = *P | 0x02;
+                    *P = *P & 0x7F;
+          }else if(memory_map[b3+(*X)] < 0){
+                   *P = *P | 0x80;
+                   *P = *P & 0xFD;
+          }
+        }
+          break;
+          case 4:
+             b1 = memory_map[(*PC)];
+             (*PC)++;
+             b2 = memory_map[(*PC)];
+             b3 = (b2 << 8) | b1; // 2bytes b2b1 little endian
+             memory_map[b3+(*X)]--;
+            for(int i = 0; i< 7;i++){
+          if (memory_map[b3+(*X)] == 0){
+                    *P = *P | 0x02;
+                    *P = *P & 0x7F;
+          }else if(memory_map[b3+(*X)] < 0){
+                   *P = *P | 0x80;
+                   *P = *P & 0xFD;
+          }
+        }
+          break;
+          }
+
+  }
+void dex_op(uint8_t *A,uint16_t *memory_map,uint16_t *PC,int type,int *P,uint8_t *X,uint8_t *Y){
+  (*X)--;
+  for(int i =0; i<2;i++){
+    if (*X == 0){
+                    *P = *P | 0x02;
+                    *P = *P & 0x7F;
+          }else if(*X < 0){
+                   *P = *P | 0x80;
+                   *P = *P & 0xFD;
+          }
+  }
+}
+void dey_op(uint8_t *A,uint16_t *memory_map,uint16_t *PC,int type,int *P,uint8_t *X,uint8_t *Y){
+  (*Y)--;
+  for(int i =0; i<2;i++){
+    if (*Y == 0){
+                    *P = *P | 0x02;
+                    *P = *P & 0x7F;
+          }else if(*Y < 0){
+                   *P = *P | 0x80;
+                   *P = *P & 0xFD;
+          }
+  }
+}
+void eor_op(uint8_t *A,uint16_t *memory_map,uint16_t *PC,int type,int *P,uint8_t *X,uint8_t *Y){
+       uint8_t b1,b2;
+     uint16_t b3;
+ switch(type){
+  case 0:
+   *A = (*A) ^ memory_map[*PC];
+   for(int i =0;i<2;i++){
+    if (*A == 0x00){
+         *P = *P | 0x02;
+         *P = *P & 0x7F;
+   }else if(*A < 0x00){
+         *P = *P | 0x80;
+         *P = *P & 0x7D;
+   }
+   }
+   break;
+   case 1:
+       *A = (*A) ^ memory_map[*PC];
+       for(int i =0;i<3;i++){
+        if (*A == 0x00){
+         *P = *P | 0x02;
+         *P = *P & 0x7F;
+   }else if(*A < 0x00){
+         *P = *P | 0x80;
+         *P = *P & 0x7D;
+          }
+       }
+   break;
+   case 2:
+     *A = (*A) ^ memory_map[(*PC)+(*X)];
+      for(int i =0;i<4;i++){
+   if (*A == 0x00){
+         *P = *P | 0x02;
+         *P = *P & 0x7F;
+   }else if(*A < 0x00){
+         *P = *P | 0x80;
+         *P = *P & 0x7D;
+   }
+ }
+   break;
+      case 3:
+     b1 = memory_map[(*PC)];
+     (*PC)++;
+     b2 = memory_map[(*PC)];
+     b3 = (b2 << 8) | b1; // 2bytes b2b1 little endian
+     *A = (*A) ^ memory_map[b3];
+      for(int i =0;i<4;i++){
+   if (*A == 0x00){
+         *P = *P | 0x02;
+         *P = *P & 0x7F;
+   }else if(*A < 0x00){
+         *P = *P | 0x80;
+         *P = *P & 0x7D;
+   }
+ }
+   break;
+   case 4:
+     b1 = memory_map[(*PC)+(*X)];
+     (*PC)++;
+     b2 = memory_map[(*PC)+(*X)];
+     b3 = (b2 << 8) | b1; // 2bytes b2b1 little endian
+     *A = (*A) ^ memory_map[b3];
+   if (*A == 0x00){
+         *P = *P | 0x02;
+         *P = *P & 0x7F;
+   }else if(*A < 0x00){
+         *P = *P | 0x80;
+         *P = *P & 0x7D;
+   }
+    break;
+    case 5:
+     b1 = memory_map[(*PC)+(*Y)];
+     (*PC)++;
+     b2 = memory_map[(*PC)+(*Y)];
+     b3 = (b2 << 8) | b1; // 2bytes b2b1 little endian
+     *A = (*A) ^ memory_map[b3];
+     for(int i =0;i<4;i++){ // + 1 cycle if page boundary crossed
+         if (*A == 0x00){
+         *P = *P | 0x02;
+         *P = *P & 0x7F;
+   }else if(*A < 0x00){
+         *P = *P | 0x80;
+         *P = *P & 0x7D;
+   }
+     }
+    break;
+    case 6:
+      *A = (*A) ^ memory_map[(*PC)+(*X)];
+      for(int i =0;i<6;i++){
+   if (*A == 0x00){
+         *P = *P | 0x02;
+         *P = *P & 0x7F;
+   }else if(*A < 0x00){
+         *P = *P | 0x80;
+         *P = *P & 0x7D;
+   }
+ }
+   break;
+   case 7:
+     *A = (*A) ^ memory_map[(*PC)+(*Y)];
+      for(int i =0;i<5;i++){ // +1 if boundary crossed
+   if (*A == 0x00){
+         *P = *P | 0x02;
+         *P = *P & 0x7F;
+   }else if(*A < 0x00){
+         *P = *P | 0x80;
+         *P = *P & 0x7D;
+   }
+ }
+   break;
+ }
+}
+void inc_op(){
+  
+}
+void rom_size(int *tam,ifstream *rom){ // get the line numbers of file
+    (*rom).seekg(0,(*rom).end);
+    *tam = (*rom).tellg();
+    *tam = *tam/(16*(sizeof(uint8_t)));
+    (*rom).seekg(0,(*rom).beg);
+
+}
+void imprime_hexa(int tamanho,uint16_t valor){
+ cout<<"mem = "<<hex<<setw(tamanho)<<setfill('0')<<uppercase<<"0x"<<valor<<" "<<endl;
+
+}
 int main(int argc, char* argv[])
 {
     uint8_t SP,A,X,Y,P,bin,opcode;
